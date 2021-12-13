@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  musicbot:
+    restart: always
+    build:
+      dockerfile: ./Dockerfile
+      context: .
+    image: musicbot
+    container_name: musicbot
+    environment:
+      - TOKEN=${TOKEN}
