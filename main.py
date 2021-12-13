@@ -13,6 +13,7 @@ from discord.ext import commands
 # Silence useless bug reports messages
 youtube_dl.utils.bug_reports_message = lambda: ''
 
+print("Building music bot...")
 
 class VoiceError(Exception):
     pass
@@ -26,7 +27,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
     YTDL_OPTIONS = {
         'format': 'bestaudio/best',
         'extractaudio': True,
-        'audioformat': 'mp3',
         'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
         'restrictfilenames': True,
         'noplaylist': True,
