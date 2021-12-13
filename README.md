@@ -49,4 +49,8 @@ Your bot should now be good to go, with near 100% uptime.
 
 ### Adding to a server
 
-<https://discord.com/api/oauth2/authorize?client_id=920007238062583848&permissions=380107803712>
+<https://discord.com/api/oauth2/authorize?client_id=920007238062583848&permissions=380107803712&scope=bot>
+
+```
+env $(cat .env) docker-compose up --build -d
+```
