@@ -10,10 +10,6 @@ from yt_dlp import YoutubeDL
 from async_timeout import timeout
 from discord.ext import commands
 
-# Silence useless bug reports messages
-# yt-dlp.utils.bug_reports_message = lambda: ''
-
-print("Finished import.")
 
 class VoiceError(Exception):
     pass
@@ -218,14 +214,13 @@ class VoiceState:
         print("Starting audio player task.") # Added this and now the whole thing suddenly works, don't ask why. FML.
         while True:
             self.next.clear()
-
             if not self.loop:
                 # Try to get the next song within 3 minutes.
                 # If no song will be added to the queue in time,
                 # the player will disconnect due to performance
                 # reasons.
                 try:
-                    async with timeout(5):  # 180 = 3 minutes
+                    async with timeout(30):  # 180 = 3 minutes
                         self.current = await self.songs.get()
                 except asyncio.TimeoutError:
                     self.bot.loop.create_task(self.stop())
@@ -234,14 +229,14 @@ class VoiceState:
             self.current.source.volume = self._volume
             self.voice.play(self.current.source, after=self.play_next_song)
             await self.current.source.channel.send(embed=self.current.create_embed())
-
             await self.next.wait()
 
     def play_next_song(self, error=None):
+        self.next.set()
         if error:
             raise VoiceError(str(error))
 
-        self.next.set()
+        # self.next.set()
 
     def skip(self):
         self.skip_votes.clear()
@@ -376,30 +371,14 @@ class Music(commands.Cog):
 
     @commands.command(name='skip')
     async def _skip(self, ctx: commands.Context):
-        """Vote to skip a song. The requester can automatically skip.
-        3 skip votes are needed for the song to be skipped.
-        """
+        """Skip the song."""
 
         if not ctx.voice_state.is_playing:
             return await ctx.send('Not playing any music right now...')
 
-        voter = ctx.message.author
-        if voter == ctx.voice_state.current.requester:
-            await ctx.message.add_reaction('⏭')
-            ctx.voice_state.skip()
+        await ctx.message.add_reaction('⏭')
+        ctx.voice_state.skip()
 
-        elif voter.id not in ctx.voice_state.skip_votes:
-            ctx.voice_state.skip_votes.add(voter.id)
-            total_votes = len(ctx.voice_state.skip_votes)
-
-            if total_votes >= 3:
-                await ctx.message.add_reaction('⏭')
-                ctx.voice_state.skip()
-            else:
-                await ctx.send('Skip vote added, currently at **{}/3**'.format(total_votes))
-
-        else:
-            await ctx.send('You have already voted to skip this song.')
 
     @commands.command(name='queue')
     async def _queue(self, ctx: commands.Context, *, page: int = 1):
