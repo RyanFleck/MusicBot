@@ -449,8 +449,6 @@ class Music(commands.Cog):
         A list of these sites can be found here: https://rg3.github.io/youtube-dl/supportedsites.html
         """
         
-        print("Playing a song.")
-
         if not ctx.voice_state.voice:
             await ctx.invoke(self._join)
 
