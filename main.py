@@ -6,14 +6,14 @@ import random
 import os
 
 import discord
-import youtube_dl
+from yt_dlp import YoutubeDL
 from async_timeout import timeout
 from discord.ext import commands
 
 # Silence useless bug reports messages
-youtube_dl.utils.bug_reports_message = lambda: ''
+# yt-dlp.utils.bug_reports_message = lambda: ''
 
-print("Building music bot...")
+print("Finished import.")
 
 class VoiceError(Exception):
     pass
@@ -44,7 +44,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
         'options': '-vn',
     }
 
-    ytdl = youtube_dl.YoutubeDL(YTDL_OPTIONS)
+    ytdl = YoutubeDL(YTDL_OPTIONS)
 
     def __init__(self, ctx: commands.Context, source: discord.FFmpegPCMAudio, *, data: dict, volume: float = 0.5):
         super().__init__(source, volume)
@@ -468,6 +468,8 @@ class Music(commands.Cog):
         This command automatically searches from various sites if no URL is provided.
         A list of these sites can be found here: https://rg3.github.io/youtube-dl/supportedsites.html
         """
+        
+        print("Playing a song.")
 
         if not ctx.voice_state.voice:
             await ctx.invoke(self._join)
@@ -479,7 +481,6 @@ class Music(commands.Cog):
                 await ctx.send('An error occurred while processing this request: {}'.format(str(e)))
             else:
                 song = Song(source)
-
                 await ctx.voice_state.songs.put(song)
                 await ctx.send('Enqueued {}'.format(str(source)))
 
@@ -494,8 +495,9 @@ class Music(commands.Cog):
                 raise commands.CommandError('Bot is already in a voice channel.')
 
 
-bot = commands.Bot('-', description='Yet another music bot.')
+bot = commands.Bot('-', description='Ryan\'s music bot.')
 bot.add_cog(Music(bot))
+print("Instantiated a bot with custom music cog.")
 
 
 @bot.event
