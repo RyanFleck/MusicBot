@@ -11,6 +11,9 @@ from async_timeout import timeout
 from discord.ext import commands
 
 
+voice_states = {}
+
+
 class VoiceError(Exception):
     pass
 
@@ -173,6 +176,7 @@ class SongQueue(asyncio.Queue):
 
 class VoiceState:
     def __init__(self, bot: commands.Bot, ctx: commands.Context):
+        print("VoiceState.__init__()")
         self.bot = bot
         self._ctx = ctx
 
@@ -188,6 +192,7 @@ class VoiceState:
         self.audio_player = bot.loop.create_task(self.audio_player_task())
 
     def __del__(self):
+        print("VoiceState.__del__()")
         self.audio_player.cancel()
 
     @property
@@ -211,6 +216,7 @@ class VoiceState:
         return self.voice and self.current
 
     async def audio_player_task(self):
+        print("VoiceState.audio_player_task()")
         print("Starting audio player task.") # Added this and now the whole thing suddenly works, don't ask why. FML.
         while True:
             self.next.clear()
@@ -220,7 +226,7 @@ class VoiceState:
                 # the player will disconnect due to performance
                 # reasons.
                 try:
-                    async with timeout(30):  # 180 = 3 minutes
+                    async with timeout(5):  # 180 = 3 minutes
                         self.current = await self.songs.get()
                 except asyncio.TimeoutError:
                     self.bot.loop.create_task(self.stop())
@@ -232,6 +238,7 @@ class VoiceState:
             await self.next.wait()
 
     def play_next_song(self, error=None):
+        print("VoiceState.play_next_song()")
         self.next.set()
         if error:
             raise VoiceError(str(error))
@@ -239,51 +246,63 @@ class VoiceState:
         # self.next.set()
 
     def skip(self):
+        print("VoiceState.skip()")
         self.skip_votes.clear()
 
         if self.is_playing:
             self.voice.stop()
 
     async def stop(self):
+        print("VoiceState.stop()")
         self.songs.clear()
 
         if self.voice:
             await self.voice.disconnect()
             self.voice = None
+       
+        print("Deleting self...")
+        del voice_states[self._ctx.guild.id]
+
 
 
 class Music(commands.Cog):
     def __init__(self, bot: commands.Bot):
+        print("Music.__init__()")
         self.bot = bot
-        self.voice_states = {}
 
     def get_voice_state(self, ctx: commands.Context):
-        state = self.voice_states.get(ctx.guild.id)
+        print("Music.get_voice_state()")
+        state = voice_states.get(ctx.guild.id)
         if not state:
             state = VoiceState(self.bot, ctx)
-            self.voice_states[ctx.guild.id] = state
+            voice_states[ctx.guild.id] = state
 
         return state
 
     def cog_unload(self):
-        for state in self.voice_states.values():
+        print("Music.cog_unload()")
+        for state in voice_states.values():
             self.bot.loop.create_task(state.stop())
 
     def cog_check(self, ctx: commands.Context):
+        print("Music.cog_check()")
         if not ctx.guild:
             raise commands.NoPrivateMessage('This command can\'t be used in DM channels.')
 
         return True
 
     async def cog_before_invoke(self, ctx: commands.Context):
+        print("Music.cog_before_invoke()")
         ctx.voice_state = self.get_voice_state(ctx)
 
     async def cog_command_error(self, ctx: commands.Context, error: commands.CommandError):
+        print("Music.cog_command_error()")
         await ctx.send('An error occurred: {}'.format(str(error)))
 
     @commands.command(name='join', invoke_without_subcommand=True)
     async def _join(self, ctx: commands.Context):
         """Joins a voice channel."""
+        print("Music._join()")
 
         destination = ctx.author.voice.channel
         if ctx.voice_state.voice:
@@ -298,6 +317,7 @@ class Music(commands.Cog):
 
         If no channel was specified, it joins your channel.
         """
+        print("Music._summon()")
 
         if not channel and not ctx.author.voice:
             raise VoiceError('You are neither connected to a voice channel nor specified a channel to join.')
@@ -312,12 +332,13 @@ class Music(commands.Cog):
     @commands.command(name='leave', aliases=['disconnect'])
     async def _leave(self, ctx: commands.Context):
         """Clears the queue and leaves the voice channel."""
+        print("Music._leave()")
 
         if not ctx.voice_state.voice:
             return await ctx.send('Not connected to any voice channel.')
 
         await ctx.voice_state.stop()
-        del self.voice_states[ctx.guild.id]
+        # del voice_states[ctx.guild.id]
 
     # @commands.command(name='volume')
     # async def _volume(self, ctx: commands.Context, *, volume: int):
@@ -335,12 +356,14 @@ class Music(commands.Cog):
     @commands.command(name='now', aliases=['current', 'playing'])
     async def _now(self, ctx: commands.Context):
         """Displays the currently playing song."""
+        print("Music._now()")
 
         await ctx.send(embed=ctx.voice_state.current.create_embed())
 
     @commands.command(name='pause')
     async def _pause(self, ctx: commands.Context):
         """Pauses the currently playing song."""
+        print("Music._pause()")
 
         if ctx.voice_state.is_playing and ctx.voice_state.voice.is_playing():
             ctx.voice_state.voice.pause()
@@ -349,6 +372,7 @@ class Music(commands.Cog):
     @commands.command(name='resume')
     async def _resume(self, ctx: commands.Context):
         """Resumes a currently paused song."""
+        print("Music._resume()")
 
         if ctx.voice_state.is_playing and ctx.voice_state.voice.is_paused():
             ctx.voice_state.voice.resume()
@@ -357,6 +381,7 @@ class Music(commands.Cog):
     @commands.command(name='stop')
     async def _stop(self, ctx: commands.Context):
         """Stops playing song and clears the queue."""
+        print("Music._stop()")
 
         ctx.voice_state.songs.clear()
 
@@ -367,6 +392,7 @@ class Music(commands.Cog):
     @commands.command(name='skip')
     async def _skip(self, ctx: commands.Context):
         """Skip the song."""
+        print("Music._skip()")
 
         if not ctx.voice_state.is_playing:
             return await ctx.send('Not playing any music right now...')
@@ -381,6 +407,7 @@ class Music(commands.Cog):
 
         You can optionally specify the page to show. Each page contains 10 elements.
         """
+        print("Music._queue()")
 
         if len(ctx.voice_state.songs) == 0:
             return await ctx.send('Empty queue.')
@@ -402,6 +429,7 @@ class Music(commands.Cog):
     @commands.command(name='shuffle')
     async def _shuffle(self, ctx: commands.Context):
         """Shuffles the queue."""
+        print("Music._shuffle()")
 
         if len(ctx.voice_state.songs) == 0:
             return await ctx.send('Empty queue.')
@@ -412,6 +440,7 @@ class Music(commands.Cog):
     @commands.command(name='remove')
     async def _remove(self, ctx: commands.Context, index: int):
         """Removes a song from the queue at a given index."""
+        print("Music._remove()")
 
         if len(ctx.voice_state.songs) == 0:
             return await ctx.send('Empty queue.')
@@ -443,6 +472,7 @@ class Music(commands.Cog):
         This command automatically searches from various sites if no URL is provided.
         A list of these sites can be found here: https://rg3.github.io/youtube-dl/supportedsites.html
         """
+        print("Music._play( search = "+str(search)+" )")
         
         if not ctx.voice_state.voice:
             await ctx.invoke(self._join)
@@ -460,6 +490,7 @@ class Music(commands.Cog):
     @_join.before_invoke
     @_play.before_invoke
     async def ensure_voice_state(self, ctx: commands.Context):
+        print("Music.ensure_voice_state()")
         if not ctx.author.voice or not ctx.author.voice.channel:
             raise commands.CommandError('You are not connected to any voice channel.')
 
