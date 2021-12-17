@@ -40,7 +40,11 @@ First, use this link:
 
 On your backend, run:
 
-```
+```sh
+# Build and Run
 env $(cat .env) docker-compose build 
-env $(cat .env) docker-compose up -d
+docker-compose up -d --force-recreate
+
+# Enter Container
+docker exec -it musicbot-2 /bin/bash
 ```
