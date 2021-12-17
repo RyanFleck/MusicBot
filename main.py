@@ -24,8 +24,8 @@ class YTDLError(Exception):
 
 class YTDLSource(discord.PCMVolumeTransformer):
     YTDL_OPTIONS = {
-        'format': 'bestaudio*',
-#       'audioformat': 'mp3',
+        'format': 'bestaudio/best',
+        'audioformat': 'mp3',
         'extractaudio': True,
         'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
         'restrictfilenames': True,
