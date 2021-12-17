@@ -24,7 +24,7 @@ class YTDLError(Exception):
 
 class YTDLSource(discord.PCMVolumeTransformer):
     YTDL_OPTIONS = {
-        'format': 'bestaudio/best',
+        'format': 'bestaudio*',
         'audioformat': 'mp3',
         'extractaudio': True,
         'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
@@ -41,7 +41,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
     FFMPEG_OPTIONS = {
         'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-        'options': '-vn --buffer-size 16384',
+        'options': ['-vn', '--buffer-size 16384'],
     }
 
     ytdl = YoutubeDL(YTDL_OPTIONS)
