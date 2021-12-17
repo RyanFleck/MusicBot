@@ -41,7 +41,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
     FFMPEG_OPTIONS = {
         "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-        "options": ["-vn", "--buffer-size 64K"],
+        "options": ["-vn", "--buffer-size 32K"],
     }
 
     ytdl = YoutubeDL(YTDL_OPTIONS)
@@ -246,7 +246,7 @@ class VoiceState:
                 # the player will disconnect due to performance
                 # reasons.
                 try:
-                    async with timeout(5):  # 180 = 3 minutes
+                    async with timeout(180):  # 180 = 3 minutes
                         self.current = await self.songs.get()
                 except asyncio.TimeoutError:
                     self.bot.loop.create_task(self.stop())
