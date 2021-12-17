@@ -36,7 +36,7 @@ env $(cat .env) poetry run python main.py
 
 First, use this link:
 
-<https://discord.com/api/oauth2/authorize?client_id=920007238062583848&permissions=380107803712&scope=bot>
+<https://discord.com/api/oauth2/authorize?client_id=920007238062583848&permissions=377960320064&scope=bot>
 
 On your backend, run:
 
