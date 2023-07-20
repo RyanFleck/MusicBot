@@ -9,7 +9,7 @@ pynacl==1.4.0
 six==1.16.0
 
 typing-extensions==3.10.0.2
-aiohttp==3.7.4.post0
+aiohttp==3.8.5
 async-timeout==3.0.1
 discord==1.7.3
 yt-dlp==2021.12.1
